@@ -488,7 +488,7 @@ export class LighterGateway {
       });
       ws.on("close", (code, reason) => {
         cleanup();
-        const normalizedReason = typeof reason === "string" && reason.length ? reason : undefined;
+        const normalizedReason = Buffer.isBuffer(reason) && reason.length > 0 ? reason.toString("utf8") : undefined;
         if (!settled) {
           fail(new Error(`WebSocket closed before ready (code=${code}${normalizedReason ? `, reason=${normalizedReason}` : ""})`));
           return;
