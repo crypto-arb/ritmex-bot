@@ -557,6 +557,7 @@ export class LighterGateway {
           fail(new Error(`WebSocket closed before ready (code=${code}${normalizedReason ? `, reason=${normalizedReason}` : ""})`));
           return;
         }
+        this.stopStaleMonitor();
         this.scheduleReconnect();
       });
       ws.on("error", (error) => {
@@ -566,6 +567,7 @@ export class LighterGateway {
           fail(error);
           return;
         }
+        this.stopStaleMonitor();
         this.scheduleReconnect();
       });
     });
