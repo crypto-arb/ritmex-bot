@@ -231,6 +231,16 @@ function extractOrders(payload: unknown): StandxOrder[] {
   return [];
 }
 
+function normalizeDepthLevels(levels: [string, string][], side: "bid" | "ask"): [string, string][] {
+  const sorted = [...levels].sort((a, b) => {
+    const priceA = Number(a?.[0] ?? 0);
+    const priceB = Number(b?.[0] ?? 0);
+    if (!Number.isFinite(priceA) || !Number.isFinite(priceB)) return 0;
+    return side === "bid" ? priceB - priceA : priceA - priceB;
+  });
+  return sorted;
+}
+
 export class StandxGateway {
   private readonly token: string;
   private readonly baseUrl: string;
@@ -695,15 +705,18 @@ export class StandxGateway {
     }
     if (channel === "depth_book") {
       const data = message.data as StandxDepthBook | undefined;
-      if (!data?.symbol) return;
+      const rawSymbol = data?.symbol ?? message?.symbol;
+      if (!rawSymbol) return;
+      const bids = normalizeDepthLevels((data.bids ?? []).map(([price, qty]) => [String(price), String(qty)]), "bid");
+      const asks = normalizeDepthLevels((data.asks ?? []).map(([price, qty]) => [String(price), String(qty)]), "ask");
       const depth: AsterDepth = {
         lastUpdateId: Number(message.seq ?? Date.now()),
-        bids: (data.bids ?? []).map(([price, qty]) => [String(price), String(qty)]),
-        asks: (data.asks ?? []).map(([price, qty]) => [String(price), String(qty)]),
+        bids,
+        asks,
         eventTime: Date.now(),
-        symbol: data.symbol,
+        symbol: rawSymbol,
       };
-      this.emitDepth(data.symbol, depth);
+      this.emitDepth(rawSymbol, depth);
       return;
     }
     if (channel === "price") {
@@ -913,10 +926,12 @@ export class StandxGateway {
       params: { symbol },
     });
     if (!data?.symbol) return;
+    const bids = normalizeDepthLevels((data.bids ?? []).map(([price, qty]) => [String(price), String(qty)]), "bid");
+    const asks = normalizeDepthLevels((data.asks ?? []).map(([price, qty]) => [String(price), String(qty)]), "ask");
     const depth: AsterDepth = {
       lastUpdateId: Date.now(),
-      bids: (data.bids ?? []).map(([price, qty]) => [String(price), String(qty)]),
-      asks: (data.asks ?? []).map(([price, qty]) => [String(price), String(qty)]),
+      bids,
+      asks,
       eventTime: Date.now(),
       symbol: data.symbol,
     };
