@@ -1,0 +1,19 @@
+services:
+  ritmex-bot:
+    build: .
+    container_name: ritmex-bot
+    restart: unless-stopped
+    # 覆盖 Dockerfile 中的默认命令
+    command: ["--exchange", "grvt", "--strategy", "maker", "--silent"]
+    env_file:
+      - .env
+    # 如果您没有在 .env 中设置以下变量，也可以直接在 environment 中设置
+    # environment:
+    #   - GRVT_API_KEY=your_key
+    #   - GRVT_API_SECRET=your_secret
+    #   - GRVT_SUB_ACCOUNT_ID=your_id
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
