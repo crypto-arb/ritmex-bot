@@ -18,7 +18,7 @@ COPY . .
 # Check if the code runs (optional, but good practice for a build)
 # RUN bun test
 
-# Set the default command to run the bot
-# Users should override the command or pass arguments to run specific strategies
-# e.g., docker run -e ... my-image --strategy trend --silent
+# Set the default command to run the bot in silent mode with the trend strategy
+# This ensures it doesn't try to launch the interactive TUI by default
 ENTRYPOINT ["bun", "run", "index.ts"]
+CMD ["--strategy", "trend", "--silent"]
